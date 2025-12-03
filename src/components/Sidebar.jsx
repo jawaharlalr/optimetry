@@ -8,6 +8,7 @@ import {
   User,
   Database,
   Receipt,
+  Home,    // <<---- Added
 } from "lucide-react";
 
 export default function Sidebar({ open, setOpen }) {
@@ -17,14 +18,14 @@ export default function Sidebar({ open, setOpen }) {
 
   const location = useLocation();
 
-  // Auto-open dropdown when inside corresponding route
+  // Auto-open dropdown based on route
   useEffect(() => {
     if (location.pathname.startsWith("/patient")) setPatientOpen(true);
     if (location.pathname.startsWith("/bill")) setBillOpen(true);
     if (location.pathname.startsWith("/data")) setDataOpen(true);
   }, [location.pathname]);
 
-  // Auto-close dropdowns when sidebar collapses
+  // Collapse dropdowns when sidebar shrinks
   useEffect(() => {
     if (!open) {
       setPatientOpen(false);
@@ -33,7 +34,6 @@ export default function Sidebar({ open, setOpen }) {
     }
   }, [open]);
 
-  // Smooth dropdown animation
   const dropdownStyle = (isOpen) => ({
     height: isOpen && open ? "80px" : "0px",
     opacity: isOpen && open ? 1 : 0,
@@ -47,7 +47,8 @@ export default function Sidebar({ open, setOpen }) {
         open ? "w-64" : "w-20"
       } bg-white shadow-xl transition-all duration-300 p-4 flex flex-col border-r`}
     >
-      {/* Sidebar Toggle */}
+
+      {/* Toggle Button */}
       <button
         onClick={() => setOpen(!open)}
         className="p-2 mb-6 rounded-lg hover:bg-gray-200"
@@ -56,6 +57,18 @@ export default function Sidebar({ open, setOpen }) {
       </button>
 
       <nav className="space-y-4">
+
+        {/* ---------------------- Dashboard Button ---------------------- */}
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `flex items-center w-full gap-3 p-3 rounded-xl transition 
+              ${isActive ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"}`
+          }
+        >
+          <Home className="w-6 h-6" />
+          {open && <span className="text-lg font-medium">Dashboard</span>}
+        </NavLink>
 
         {/* ---------------- Patient Details ---------------- */}
         <div>
