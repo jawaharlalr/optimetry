@@ -1,103 +1,71 @@
-import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   FileText,
   PlusCircle,
-  Menu,
   ChevronDown,
   User,
   Database,
   Receipt,
-  Home,    // <<---- Added
+  Home,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
-export default function Sidebar({ open, setOpen }) {
+export default function Sidebar() {
+  const location = useLocation();
+
   const [patientOpen, setPatientOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
 
-  const location = useLocation();
-
-  // Auto-open dropdown based on route
+  // Auto expand dropdowns based on current route
   useEffect(() => {
-    if (location.pathname.startsWith("/patient")) setPatientOpen(true);
-    if (location.pathname.startsWith("/bill")) setBillOpen(true);
-    if (location.pathname.startsWith("/data")) setDataOpen(true);
+    setPatientOpen(location.pathname.startsWith("/patient"));
+    setBillOpen(location.pathname.startsWith("/bill"));
+    setDataOpen(location.pathname.startsWith("/data"));
   }, [location.pathname]);
 
-  // Collapse dropdowns when sidebar shrinks
-  useEffect(() => {
-    if (!open) {
-      setPatientOpen(false);
-      setBillOpen(false);
-      setDataOpen(false);
-    }
-  }, [open]);
-
-  const dropdownStyle = (isOpen) => ({
-    height: isOpen && open ? "80px" : "0px",
-    opacity: isOpen && open ? 1 : 0,
-    transition: "all 0.3s ease",
-    overflow: "hidden",
-  });
-
   return (
-    <div
-      className={`${
-        open ? "w-64" : "w-20"
-      } bg-white shadow-xl transition-all duration-300 p-4 flex flex-col border-r`}
-    >
+    <div className="fixed top-0 left-0 w-64 h-screen p-4 bg-white border-r shadow-lg">
 
-      {/* Toggle Button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="p-2 mb-6 rounded-lg hover:bg-gray-200"
+      {/* -------- Dashboard -------- */}
+      <NavLink
+        to="/"
+        className={({ isActive }) =>
+          `flex items-center gap-3 p-3 rounded-xl transition ${
+            isActive ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
+          }`
+        }
       >
-        <Menu className="w-6 h-6" />
-      </button>
+        <Home className="w-6 h-6" />
+        <span className="text-lg font-medium">Dashboard</span>
+      </NavLink>
 
-      <nav className="space-y-4">
-
-        {/* ---------------------- Dashboard Button ---------------------- */}
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            `flex items-center w-full gap-3 p-3 rounded-xl transition 
-              ${isActive ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"}`
-          }
+      {/* -------- Patient Section -------- */}
+      <div className="mt-4">
+        <button
+          onClick={() => setPatientOpen(!patientOpen)}
+          className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-gray-100"
         >
-          <Home className="w-6 h-6" />
-          {open && <span className="text-lg font-medium">Dashboard</span>}
-        </NavLink>
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6" />
+            <span className="text-lg font-medium">Patient Details</span>
+          </div>
 
-        {/* ---------------- Patient Details ---------------- */}
-        <div>
-          <button
-            onClick={() => setPatientOpen(!patientOpen)}
-            className={`flex items-center justify-between w-full p-3 rounded-xl transition
-              hover:bg-gray-100
-              ${location.pathname.startsWith("/patient") && open ? "bg-blue-50" : ""}`}
-          >
-            <div className="flex items-center gap-3">
-              <User className="w-6 h-6" />
-              {open && <span className="text-lg font-medium">Patient Details</span>}
-            </div>
+          <ChevronDown
+            className={`w-5 h-5 transition-transform ${
+              patientOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-            {open && (
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  patientOpen ? "rotate-180" : ""
-                }`}
-              />
-            )}
-          </button>
-
-          <div className="ml-10" style={dropdownStyle(patientOpen)}>
+        {patientOpen && (
+          <div className="mt-2 ml-10 space-y-2">
             <NavLink
               to="/patient/manage"
               className={({ isActive }) =>
-                `flex items-center gap-2 p-2 mt-2 rounded-lg transition
-                 ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:text-black"}`
+                `flex items-center gap-2 p-2 rounded-lg ${
+                  isActive ? "bg-blue-100 text-blue-600" : "hover:text-black"
+                }`
               }
             >
               <FileText className="w-4 h-4" /> Manage
@@ -106,43 +74,43 @@ export default function Sidebar({ open, setOpen }) {
             <NavLink
               to="/patient/add"
               className={({ isActive }) =>
-                `flex items-center gap-2 p-2 rounded-lg transition
-                 ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:text-black"}`
+                `flex items-center gap-2 p-2 rounded-lg ${
+                  isActive ? "bg-blue-100 text-blue-600" : "hover:text-black"
+                }`
               }
             >
               <PlusCircle className="w-4 h-4" /> Add
             </NavLink>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* ---------------- Medical Bill ---------------- */}
-        <div>
-          <button
-            onClick={() => setBillOpen(!billOpen)}
-            className={`flex items-center justify-between w-full p-3 rounded-xl transition 
-              hover:bg-gray-100
-              ${location.pathname.startsWith("/bill") && open ? "bg-blue-50" : ""}`}
-          >
-            <div className="flex items-center gap-3">
-              <Receipt className="w-6 h-6" />
-              {open && <span className="text-lg font-medium">Medical Bill</span>}
-            </div>
+      {/* -------- Bill Section -------- */}
+      <div className="mt-4">
+        <button
+          onClick={() => setBillOpen(!billOpen)}
+          className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-gray-100"
+        >
+          <div className="flex items-center gap-3">
+            <Receipt className="w-6 h-6" />
+            <span className="text-lg font-medium">Medical Bill</span>
+          </div>
 
-            {open && (
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  billOpen ? "rotate-180" : ""
-                }`}
-              />
-            )}
-          </button>
+          <ChevronDown
+            className={`w-5 h-5 transition-transform ${
+              billOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-          <div className="ml-10" style={dropdownStyle(billOpen)}>
+        {billOpen && (
+          <div className="mt-2 ml-10 space-y-2">
             <NavLink
               to="/bill/manage"
               className={({ isActive }) =>
-                `flex items-center gap-2 p-2 mt-2 rounded-lg transition
-                   ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:text-black"}`
+                `flex items-center gap-2 p-2 rounded-lg ${
+                  isActive ? "bg-blue-100 text-blue-600" : "hover:text-black"
+                }`
               }
             >
               <FileText className="w-4 h-4" /> Manage
@@ -151,43 +119,43 @@ export default function Sidebar({ open, setOpen }) {
             <NavLink
               to="/bill/add"
               className={({ isActive }) =>
-                `flex items-center gap-2 p-2 rounded-lg transition
-                   ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:text-black"}`
+                `flex items-center gap-2 p-2 rounded-lg ${
+                  isActive ? "bg-blue-100 text-blue-600" : "hover:text-black"
+                }`
               }
             >
               <PlusCircle className="w-4 h-4" /> Add
             </NavLink>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* ---------------- Data ---------------- */}
-        <div>
-          <button
-            onClick={() => setDataOpen(!dataOpen)}
-            className={`flex items-center justify-between w-full p-3 rounded-xl transition 
-              hover:bg-gray-100
-              ${location.pathname.startsWith("/data") && open ? "bg-blue-50" : ""}`}
-          >
-            <div className="flex items-center gap-3">
-              <Database className="w-6 h-6" />
-              {open && <span className="text-lg font-medium">Data</span>}
-            </div>
+      {/* -------- Data Section -------- */}
+      <div className="mt-4">
+        <button
+          onClick={() => setDataOpen(!dataOpen)}
+          className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-gray-100"
+        >
+          <div className="flex items-center gap-3">
+            <Database className="w-6 h-6" />
+            <span className="text-lg font-medium">Data</span>
+          </div>
 
-            {open && (
-              <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  dataOpen ? "rotate-180" : ""
-                }`}
-              />
-            )}
-          </button>
+          <ChevronDown
+            className={`w-5 h-5 transition-transform ${
+              dataOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-          <div className="ml-10" style={dropdownStyle(dataOpen)}>
+        {dataOpen && (
+          <div className="mt-2 ml-10 space-y-2">
             <NavLink
               to="/data/manage"
               className={({ isActive }) =>
-                `flex items-center gap-2 p-2 mt-2 rounded-lg transition
-                   ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:text-black"}`
+                `flex items-center gap-2 p-2 rounded-lg ${
+                  isActive ? "bg-blue-100 text-blue-600" : "hover:text-black"
+                }`
               }
             >
               <FileText className="w-4 h-4" /> Manage
@@ -196,16 +164,17 @@ export default function Sidebar({ open, setOpen }) {
             <NavLink
               to="/data/add"
               className={({ isActive }) =>
-                `flex items-center gap-2 p-2 rounded-lg transition
-                   ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:text-black"}`
+                `flex items-center gap-2 p-2 rounded-lg ${
+                  isActive ? "bg-blue-100 text-blue-600" : "hover:text-black"
+                }`
               }
             >
               <PlusCircle className="w-4 h-4" /> Add
             </NavLink>
           </div>
-        </div>
+        )}
+      </div>
 
-      </nav>
     </div>
   );
 }
