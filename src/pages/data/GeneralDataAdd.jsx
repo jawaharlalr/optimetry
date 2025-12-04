@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { Plus, Trash2, Save, FileText } from "lucide-react";
 
 
-export default function AddData() {
+export default function AddHealthData() {
   const [eye, setEye] = useState([""]);
   const [chiefComplaint, setChiefComplaint] = useState([""]);
   const [glass, setGlass] = useState([""]);
@@ -19,21 +19,21 @@ export default function AddData() {
 
   // Update row
   const updateRow = (setter, list, index, value) => {
-    const clone = [...list];
-    clone[index] = value;
-    setter(clone);
+    const updated = [...list];
+    updated[index] = value;
+    setter(updated);
   };
 
   // Remove row
   const removeRow = (setter, list, index) => {
     if (list.length === 1) return;
-    setter(list.filter((_, i) => i !== index));
+    setter(list.filter((_, idx) => idx !== index));
   };
 
-  // Save Data
+  // Save Health Data
   const saveData = async () => {
     try {
-      await addDoc(collection(db, "data"), {
+      await addDoc(collection(db, "healthData"), {
         eye,
         chiefComplaint,
         glass,
@@ -44,7 +44,7 @@ export default function AddData() {
         createdAt: new Date(),
       });
 
-      toast.success("Data Added Successfully!");
+      toast.success("Health Data Added Successfully!");
 
       setEye([""]);
       setChiefComplaint([""]);
@@ -54,11 +54,11 @@ export default function AddData() {
       setProgression([""]);
       setAssociation([""]);
     } catch (error) {
-      toast.error("Failed to save data");
+      toast.error("Failed to save health data");
     }
   };
 
-  // Render multi-input component
+  // Render multi-input set
   const renderMultiInput = (label, list, setter, icon) => (
     <div className="p-4 mb-6 bg-white rounded-lg shadow">
       <h3 className="flex items-center gap-2 mb-3 text-lg font-semibold">
@@ -98,7 +98,7 @@ export default function AddData() {
     <div className="max-w-3xl p-10">
       <h1 className="flex items-center gap-2 mb-6 text-3xl font-bold">
         <Plus size={28} className="text-blue-600" />
-        Add Data
+        Add Patient Health Data
       </h1>
 
       {renderMultiInput("Eye", eye, setEye, <EyeIcon />)}
@@ -114,18 +114,20 @@ export default function AddData() {
         className="flex items-center gap-3 px-6 py-3 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
       >
         <Save size={20} />
-        Save Data
+        Save Health Data
       </button>
     </div>
   );
 }
 
-/* ---- CUSTOM ICONS USING LUCIDE ---- */
+/* ---- ICONS ---- */
 function EyeIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-  </svg>
+  return (
+    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
 }
 
 function ComplaintIcon() {
@@ -133,33 +135,43 @@ function ComplaintIcon() {
 }
 
 function GlassIcon() {
-  return <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M4 3h16l-1.5 9h-13zM9 21l1-5h4l1 5z"/>
-  </svg>;
+  return (
+    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M4 3h16l-1.5 9h-13zM9 21l1-5h4l1 5z" />
+    </svg>
+  );
 }
 
 function DurationIcon() {
-  return <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 6v6l4 2" />
-  </svg>;
+  return (
+    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
 }
 
 function DistanceIcon() {
-  return <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M3 12h18M12 3l3 3-3 3M12 21l3-3-3-3" />
-  </svg>;
+  return (
+    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path d="M3 12h18M12 3l3 3-3 3M12 21l3-3-3-3" />
+    </svg>
+  );
 }
 
 function ProgressIcon() {
-  return <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M5 12l5 5L20 7" />
-  </svg>;
+  return (
+    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
 }
 
 function AssociationIcon() {
-  return <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <circle cx="9" cy="12" r="3" />
-    <circle cx="15" cy="12" r="3" />
-  </svg>;
+  return (
+    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="9" cy="12" r="3" />
+      <circle cx="15" cy="12" r="3" />
+    </svg>
+  );
 }

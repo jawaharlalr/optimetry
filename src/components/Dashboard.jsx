@@ -1,6 +1,9 @@
+// src/components/Dashboard.jsx
+
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { FaUserInjured, FaFileInvoice, FaDatabase, FaCalendarDay } from "react-icons/fa";
 
 export default function Dashboard() {
   const [patientCount, setPatientCount] = useState(0);
@@ -8,9 +11,7 @@ export default function Dashboard() {
   const [dataCount, setDataCount] = useState(0);
   const [todayBills, setTodayBills] = useState(0);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  useEffect(() => { loadStats(); }, []);
 
   const loadStats = async () => {
     const p = await getDocs(collection(db, "patients"));
@@ -23,7 +24,7 @@ export default function Dashboard() {
     setDataCount(d.size);
 
     const today = new Date().toISOString().split("T")[0];
-    const todayCount = b.docs.filter((bill) => {
+    const todayCount = b.docs.filter(bill => {
       const created = bill.data().createdAt?.toDate();
       return created?.toISOString().startsWith(today);
     }).length;
@@ -32,31 +33,28 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="mb-6 text-3xl font-bold">Dashboard Overview</h1>
+    <div className="min-h-screen p-6 bg-blue-900">
+      <h1 className="mb-6 text-3xl font-bold text-white">Dashboard Overview</h1>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
-        <div className="p-6 text-white bg-blue-600 shadow rounded-xl">
-          <h2 className="text-lg font-semibold">Total Patients</h2>
-          <p className="mt-2 text-3xl font-bold">{patientCount}</p>
-        </div>
+        <DashboardCard title="Total Patients" count={patientCount} icon={<FaUserInjured size={40} />} color="bg-blue-700" />
+        <DashboardCard title="Total Bills" count={billCount} icon={<FaFileInvoice size={40} />} color="bg-blue-600" />
+        <DashboardCard title="Total Data Records" count={dataCount} icon={<FaDatabase size={40} />} color="bg-blue-500" />
+        <DashboardCard title="Bills Today" count={todayBills} icon={<FaCalendarDay size={40} />} color="bg-blue-800" />
 
-        <div className="p-6 text-white bg-green-600 shadow rounded-xl">
-          <h2 className="text-lg font-semibold">Total Bills</h2>
-          <p className="mt-2 text-3xl font-bold">{billCount}</p>
-        </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="p-6 text-white bg-purple-600 shadow rounded-xl">
-          <h2 className="text-lg font-semibold">Total Data Records</h2>
-          <p className="mt-2 text-3xl font-bold">{dataCount}</p>
-        </div>
-
-        <div className="p-6 text-white bg-orange-500 shadow rounded-xl">
-          <h2 className="text-lg font-semibold">Bills Today</h2>
-          <p className="mt-2 text-3xl font-bold">{todayBills}</p>
-        </div>
-
+function DashboardCard({ title, count, icon, color }) {
+  return (
+    <div className={`flex items-center gap-4 p-6 text-white ${color} shadow-lg rounded-xl`}>
+      {icon}
+      <div>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="mt-1 text-3xl font-bold">{count}</p>
       </div>
     </div>
   );

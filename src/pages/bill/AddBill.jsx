@@ -1,15 +1,22 @@
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
 import { db } from "../../firebase";
 import { addDoc, collection, getDocs } from "firebase/firestore";
 import toast from "react-hot-toast";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Save } from "lucide-react";
+
+/* -------- TABLE COMPONENTS -------- */
+import GeneralDataTable from "./components/GeneralDataTable";
+import HealthHistoryTable from "./components/HealthHistoryTable";
+import OcularHistoryTable from "./components/OcularHistoryTable";
+import CurrentMedicationTable from "./components/CurrentMedicationTable";
+import BirthHistoryAllergiesTable from "./components/BirthHistoryAllergiesTable";
 
 export default function AddBill() {
   const [patients, setPatients] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState(null);
 
+  /* ------------------- DROPDOWN OPTIONS ------------------- */
   const [options, setOptions] = useState({
     eyeType: [],
     chiefComplaint: [],
@@ -19,6 +26,11 @@ export default function AddBill() {
     progression: [],
     association: [],
   });
+
+  const [ocularConditionList, setOcularConditionList] = useState([]);
+  const [healthConditionList, setHealthConditionList] = useState([]);
+
+  /* ------------------- TABLE STATES ------------------- */
 
   const [rows, setRows] = useState([
     {
@@ -33,157 +45,70 @@ export default function AddBill() {
     },
   ]);
 
-  // Load Patients
-  const loadPatients = async () => {
-    const snap = await getDocs(collection(db, "patients"));
-    setPatients(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-  };
+  const [healthRows, setHealthRows] = useState([
+    { condition: "", duration: "", investigation: "" },
+  ]);
 
-  // Load dropdown options
-  const loadOptions = async () => {
-    const snap = await getDocs(collection(db, "data"));
-    const data = snap.docs.map((d) => d.data());
+  const [ocularRows, setOcularRows] = useState([
+    { eye: "", condition: "", duration: "", recentInvestigation: "" },
+  ]);
 
-    const getUnique = (field) =>
-      [...new Set(data.flatMap((d) => d[field] || []).filter(Boolean))];
+  const [medicationRows, setMedicationRows] = useState([{ medication: "" }]);
 
-    setOptions({
-      eyeType: getUnique("eye"),
-      chiefComplaint: getUnique("chiefComplaint"),
-      glass: getUnique("glass"),
-      duration: getUnique("duration"),
-      distance: getUnique("distance"),
-      progression: getUnique("progression"),
-      association: getUnique("association"),
-    });
-  };
+  const [birthAllergyRows, setBirthAllergyRows] = useState([
+    { birthHistory: "", allergies: "" },
+  ]);
 
+  /* ------------------- FIRESTORE LOAD ------------------- */
   useEffect(() => {
-    loadPatients();
-    loadOptions();
+    (async () => {
+      // LOAD PATIENTS
+      const patientSnap = await getDocs(collection(db, "patients"));
+      setPatients(patientSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+      // LOAD GENERAL OPTIONS
+      const dataSnap = await getDocs(collection(db, "data"));
+      const data = dataSnap.docs.map((d) => d.data());
+
+      const unique = (field) =>
+        [...new Set(data.flatMap((d) => d[field] || []).filter(Boolean))];
+
+      setOptions({
+        eyeType: unique("eye"),
+        chiefComplaint: unique("chiefComplaint"),
+        glass: unique("glass"),
+        duration: unique("duration"),
+        distance: unique("distance"),
+        progression: unique("progression"),
+        association: unique("association"),
+      });
+
+      // LOAD OCULAR CONDITIONS
+      const ocularSnap = await getDocs(collection(db, "ocularConditions"));
+      setOcularConditionList(
+        ocularSnap.docs.map((doc) => doc.data().name)
+      );
+
+      // LOAD HEALTH CONDITIONS
+      const healthSnap = await getDocs(collection(db, "healthData"));
+      const extracted = healthSnap.docs
+        .flatMap((d) => d.data().condition)
+        .filter(Boolean);
+
+      setHealthConditionList([...new Set(extracted)]);
+    })();
   }, []);
 
-  // ---------------------------------------------------------
-  // SEARCHABLE DROPDOWN (with outside click + empty hide)
-  // ---------------------------------------------------------
-  const SearchableDropdown = ({ value, list, onChange, placeholder }) => {
-    const [open, setOpen] = useState(false);
-    const [input, setInput] = useState(value || "");
-    const inputRef = useRef(null);
-    const dropdownRef = useRef(null);
-    const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  /* ------------------- HANDLERS ------------------- */
 
-    // Sync input with parent value
-    useEffect(() => {
-      setInput(value || "");
-    }, [value]);
-
-    // Filter items
-    const filtered = list.filter((i) =>
-      i.toLowerCase().includes(input.toLowerCase())
-    );
-
-    // Position dropdown
-    const updatePos = () => {
-      const rect = inputRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setPos({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    };
-
-    useEffect(() => {
-      if (open) updatePos();
-      window.addEventListener("scroll", updatePos);
-      window.addEventListener("resize", updatePos);
-      return () => {
-        window.removeEventListener("scroll", updatePos);
-        window.removeEventListener("resize", updatePos);
-      };
-    }, [open]);
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-      const handleClickOutside = (e) => {
-        if (
-          inputRef.current &&
-          !inputRef.current.contains(e.target) &&
-          dropdownRef.current &&
-          !dropdownRef.current.contains(e.target)
-        ) {
-          setOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-      <>
-        <input
-          ref={inputRef}
-          className="w-full p-1 border rounded"
-          value={input}
-          placeholder={placeholder}
-          onFocus={() => input !== "" && setOpen(true)}
-          onChange={(e) => {
-            const val = e.target.value;
-            setInput(val);
-
-            if (val === "") {
-              setOpen(false); // hide when empty
-            } else {
-              setOpen(true);
-            }
-          }}
-        />
-
-        {open &&
-          createPortal(
-            <div
-              ref={dropdownRef}
-              className="absolute bg-white border rounded shadow max-h-40 overflow-y-auto z-[99999]"
-              style={{
-                top: pos.top,
-                left: pos.left,
-                width: pos.width,
-              }}
-            >
-              {filtered.length === 0 ? (
-                <div className="p-2 text-sm text-gray-500">No results</div>
-              ) : (
-                filtered.map((item, index) => (
-                  <div
-                    key={index}
-                    className="p-2 text-sm cursor-pointer hover:bg-gray-100"
-                    onMouseDown={() => {
-                      onChange(item);
-                      setInput(item);
-                      setOpen(false);
-                    }}
-                  >
-                    {item}
-                  </div>
-                ))
-              )}
-            </div>,
-            document.body
-          )}
-      </>
-    );
-  };
-
-  // Update Row
-  const updateRow = (index, field, value) => {
+  // GENERAL TABLE
+  const updateRow = (i, field, value) => {
     const updated = [...rows];
-    updated[index][field] = value;
+    updated[i][field] = value;
     setRows(updated);
   };
 
-  // Add Row
-  const addRow = () => {
+  const addRow = () =>
     setRows([
       ...rows,
       {
@@ -197,47 +122,97 @@ export default function AddBill() {
         others: "",
       },
     ]);
+
+  const removeRow = (i) => setRows(rows.filter((_, idx) => idx !== i));
+
+  // HEALTH HISTORY
+  const updateHealthRow = (i, field, value) => {
+    const updated = [...healthRows];
+    updated[i][field] = value;
+    setHealthRows(updated);
   };
 
-  // Remove Row
-  const removeRow = (index) => {
-    setRows(rows.filter((_, i) => i !== index));
+  const addHealthRow = () =>
+    setHealthRows([
+      ...healthRows,
+      { condition: "", duration: "", investigation: "" },
+    ]);
+
+  const removeHealthRow = (i) =>
+    setHealthRows(healthRows.filter((_, idx) => idx !== i));
+
+  // OCULAR HISTORY
+  const updateOcularRow = (i, field, value) => {
+    const updated = [...ocularRows];
+    updated[i][field] = value;
+    setOcularRows(updated);
   };
 
-  // Save
+  const addOcularRow = () =>
+    setOcularRows([
+      ...ocularRows,
+      { eye: "", condition: "", duration: "", recentInvestigation: "" },
+    ]);
+
+  const removeOcularRow = (i) =>
+    setOcularRows(ocularRows.filter((_, idx) => idx !== i));
+
+  // MEDICATION
+  const updateMedicationRow = (i, field, value) => {
+    const updated = [...medicationRows];
+    updated[i][field] = value;
+    setMedicationRows(updated);
+  };
+
+  const addMedicationRow = () =>
+    setMedicationRows([...medicationRows, { medication: "" }]);
+
+  const removeMedicationRow = (i) =>
+    setMedicationRows(medicationRows.filter((_, idx) => idx !== i));
+
+  // BIRTH + ALLERGY
+  const updateBirthAllergyRow = (i, field, value) => {
+    const updated = [...birthAllergyRows];
+    updated[i][field] = value;
+    setBirthAllergyRows(updated);
+  };
+
+  const addBirthAllergyRow = () =>
+    setBirthAllergyRows([
+      ...birthAllergyRows,
+      { birthHistory: "", allergies: "" },
+    ]);
+
+  const removeBirthAllergyRow = (i) =>
+    setBirthAllergyRows(birthAllergyRows.filter((_, idx) => idx !== i));
+
+  /* ------------------- SAVE BILL ------------------- */
   const saveBill = async () => {
-    if (!selectedPatient) return toast.error("Please select a patient");
+    if (!selectedPatient) {
+      return toast.error("Please select a patient");
+    }
 
     await addDoc(collection(db, "bills"), {
       patient: selectedPatient,
-      items: rows,
+      generalData: rows,
+      healthHistory: healthRows,
+      ocularHistory: ocularRows,
+      medications: medicationRows,
+      birthAndAllergies: birthAllergyRows,
       createdAt: new Date(),
     });
 
-    toast.success("Bill saved!");
-
-    setSelectedPatient(null);
-    setRows([
-      {
-        eye: "",
-        cc: "",
-        glass: "",
-        duration: "",
-        distance: "",
-        progression: "",
-        association: "",
-        others: "",
-      },
-    ]);
+    toast.success("Bill saved successfully!");
   };
 
-  // Filter Patients
+  /* ------------------- FILTER PATIENT ------------------- */
   const filteredPatients = patients.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.mrNo.toLowerCase().includes(search.toLowerCase())
   );
 
+  /* ------------------- UI ------------------- */
   return (
     <div className="w-full p-10">
       <h1 className="mb-6 text-2xl font-bold">Add Medical Bill</h1>
@@ -252,7 +227,7 @@ export default function AddBill() {
         />
 
         {search && (
-          <div className="absolute left-0 right-0 bg-white border rounded shadow max-h-60 overflow-y-auto z-[9999]">
+          <div className="absolute bg-white border rounded shadow max-h-60 overflow-y-auto left-0 right-0 z-[9999]">
             {filteredPatients.length === 0 ? (
               <div className="p-2 text-gray-500">No patients found</div>
             ) : (
@@ -286,129 +261,47 @@ export default function AddBill() {
         </div>
       )}
 
-      {/* BILL TABLE */}
-      <div className="p-4 bg-white border rounded shadow">
-        <h2 className="mb-4 text-lg font-bold">Bill Details</h2>
+      {/* TABLES */}
+      <GeneralDataTable
+        rows={rows}
+        options={options}
+        updateRow={updateRow}
+        addRow={addRow}
+        removeRow={removeRow}
+      />
 
-        <div className="relative">
-          <div className="overflow-visible">
-            <table className="min-w-full text-sm border">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-2 border">S.No</th>
-                  <th className="p-2 border">Eye</th>
-                  <th className="p-2 border">Chief Complaint</th>
-                  <th className="p-2 border">Glass</th>
-                  <th className="p-2 border">Duration</th>
-                  <th className="p-2 border">Distance</th>
-                  <th className="p-2 border">Progression</th>
-                  <th className="p-2 border">Association</th>
-                  <th className="p-2 border">Others</th>
-                  <th className="p-2 border">Remove</th>
-                </tr>
-              </thead>
+      <HealthHistoryTable
+        healthRows={healthRows}
+        updateHealthRow={updateHealthRow}
+        addHealthRow={addHealthRow}
+        removeHealthRow={removeHealthRow}
+        conditionList={healthConditionList} // 🔥 Correct source
+      />
 
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={index}>
-                    <td className="p-2 text-center border">{index + 1}</td>
+      <OcularHistoryTable
+        ocularRows={ocularRows}
+        updateOcularRow={updateOcularRow}
+        addOcularRow={addOcularRow}
+        removeOcularRow={removeOcularRow}
+        ocularConditionList={ocularConditionList}
+        eyeList={options.eyeType}
+      />
 
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.eye}
-                        list={options.eyeType}
-                        onChange={(val) => updateRow(index, "eye", val)}
-                        placeholder="Select"
-                      />
-                    </td>
+      <CurrentMedicationTable
+        medicationRows={medicationRows}
+        updateMedicationRow={updateMedicationRow}
+        addMedicationRow={addMedicationRow}
+        removeMedicationRow={removeMedicationRow}
+      />
 
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.cc}
-                        list={options.chiefComplaint}
-                        onChange={(val) => updateRow(index, "cc", val)}
-                        placeholder="Select"
-                      />
-                    </td>
+      <BirthHistoryAllergiesTable
+        rows={birthAllergyRows}
+        updateRow={updateBirthAllergyRow}
+        addRow={addBirthAllergyRow}
+        removeRow={removeBirthAllergyRow}
+      />
 
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.glass}
-                        list={options.glass}
-                        onChange={(val) => updateRow(index, "glass", val)}
-                        placeholder="Select"
-                      />
-                    </td>
-
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.duration}
-                        list={options.duration}
-                        onChange={(val) => updateRow(index, "duration", val)}
-                        placeholder="Select"
-                      />
-                    </td>
-
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.distance}
-                        list={options.distance}
-                        onChange={(val) => updateRow(index, "distance", val)}
-                        placeholder="Select"
-                      />
-                    </td>
-
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.progression}
-                        list={options.progression}
-                        onChange={(val) => updateRow(index, "progression", val)}
-                        placeholder="Select"
-                      />
-                    </td>
-
-                    <td className="p-2 border">
-                      <SearchableDropdown
-                        value={row.association}
-                        list={options.association}
-                        onChange={(val) => updateRow(index, "association", val)}
-                        placeholder="Select"
-                      />
-                    </td>
-
-                    <td className="p-2 border">
-                      <input
-                        className="w-full p-1 border rounded"
-                        value={row.others}
-                        onChange={(e) =>
-                          updateRow(index, "others", e.target.value)
-                        }
-                      />
-                    </td>
-
-                    <td className="p-2 text-center border">
-                      <button
-                        onClick={() => removeRow(index)}
-                        className="p-1 text-white bg-red-500 rounded hover:bg-red-600"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <button
-          onClick={addRow}
-          className="flex items-center gap-1 px-4 py-1 mt-4 text-white bg-green-600 rounded"
-        >
-          <Plus size={18} /> Add Row
-        </button>
-      </div>
-
+      {/* SAVE */}
       <button
         onClick={saveBill}
         className="flex items-center gap-2 px-6 py-2 mt-6 text-white bg-blue-600 rounded"

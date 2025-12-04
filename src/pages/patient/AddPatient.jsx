@@ -2,6 +2,16 @@ import { useState } from "react";
 import { db } from "../../firebase";
 import { collection, addDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+import {
+  IdCard,
+  User,
+  Phone,
+  Calendar,
+  MapPin,
+  Save,
+  ChevronDown,
+} from "lucide-react";
 
 export default function AddPatient() {
   const [mrNo, setMrNo] = useState("");
@@ -23,7 +33,6 @@ export default function AddPatient() {
     const today = new Date();
 
     let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-
     const monthDiff = today.getMonth() - birthDate.getMonth();
     const dayDiff = today.getDate() - birthDate.getDate();
 
@@ -54,7 +63,6 @@ export default function AddPatient() {
 
       toast.success("Patient Added Successfully!");
 
-      // Reset fields
       setMrNo("");
       setName("");
       setPhone("");
@@ -68,70 +76,106 @@ export default function AddPatient() {
   };
 
   return (
-    <div className="max-w-xl p-10">
-      <h1 className="mb-6 text-2xl font-bold">Add Patient</h1>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="max-w-xl p-10 mx-auto bg-white shadow-xl rounded-xl"
+    >
+      <h1 className="mb-6 text-3xl font-bold text-blue-700">Add Patient</h1>
 
-      <input
-        className="w-full p-2 mb-4 border rounded"
-        placeholder="MR No"
-        value={mrNo}
-        onChange={(e) => setMrNo(e.target.value)}
-      />
+      {/* MR No */}
+      <div className="relative mb-4">
+        <IdCard className="absolute w-5 h-5 text-gray-500 left-3 top-3" />
+        <input
+          className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="MR No"
+          value={mrNo}
+          onChange={(e) => setMrNo(e.target.value)}
+        />
+      </div>
 
-      <input
-        className="w-full p-2 mb-4 border rounded"
-        placeholder="Full Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
+      {/* Name */}
+      <div className="relative mb-4">
+        <User className="absolute w-5 h-5 text-gray-500 left-3 top-3" />
+        <input
+          className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
 
-      <input
-        className="w-full p-2 mb-4 border rounded"
-        placeholder="Phone Number"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
+      {/* Phone */}
+      <div className="relative mb-4">
+        <Phone className="absolute w-5 h-5 text-gray-500 left-3 top-3" />
+        <input
+          className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Phone Number"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </div>
 
-      <label className="block mb-1 font-medium">Date of Birth</label>
-      <input
-        type="date"
-        className="w-full p-2 mb-4 border rounded"
-        value={dob}
-        onChange={handleDobChange}
-      />
+      {/* DOB */}
+      <label className="block mb-1 font-medium text-gray-700">Date of Birth</label>
+      <div className="relative mb-4">
+        <Calendar className="absolute w-5 h-5 text-gray-500 left-3 top-3" />
+        <input
+          type="date"
+          className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={dob}
+          onChange={handleDobChange}
+        />
+      </div>
 
-      <select
-        className="w-full p-2 mb-4 border rounded"
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Select Gender</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-      </select>
+      {/* Gender */}
+      <div className="relative mb-4">
+        <ChevronDown className="absolute w-5 h-5 text-gray-500 pointer-events-none right-3 top-3" />
+        <select
+          className="w-full p-3 border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
 
-      <input
-        className="w-full p-2 mb-4 bg-gray-100 border rounded"
-        placeholder="Age"
-        value={age}
-        readOnly
-      />
+      {/* Age (readonly) */}
+      <div className="relative mb-4">
+        <Calendar className="absolute w-5 h-5 text-gray-500 left-3 top-3" />
+        <input
+          className="w-full p-3 pl-10 bg-gray-100 border rounded-lg"
+          placeholder="Age"
+          value={age}
+          readOnly
+        />
+      </div>
 
-      <textarea
-        className="w-full p-2 mb-4 border rounded"
-        placeholder="Address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        rows={3}
-      ></textarea>
+      {/* Address */}
+      <div className="relative mb-4">
+        <MapPin className="absolute w-5 h-5 text-gray-500 left-3 top-3" />
+        <textarea
+          className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          rows={3}
+        ></textarea>
+      </div>
 
-      <button
+      {/* Save button with animation */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.97 }}
         onClick={submitHandler}
-        className="px-6 py-2 text-white bg-blue-600 rounded"
+        className="flex items-center gap-2 px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
       >
-        Save
-      </button>
-    </div>
+        <Save className="w-5 h-5" /> Save
+      </motion.button>
+    </motion.div>
   );
 }

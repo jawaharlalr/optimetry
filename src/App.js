@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -17,26 +17,41 @@ import ManagePatients from "./pages/patient/ManagePatients";
 import AddBill from "./pages/bill/AddBill";
 import ManageBill from "./pages/bill/ManageBill";
 
-// Data Pages
-import AddData from "./pages/data/AddData";
-import ManageData from "./pages/data/ManageData";
+// ---- General Data Pages ----
+import GeneralDataAdd from "./pages/data/GeneralDataAdd";
+import GeneralDataManage from "./pages/data/GeneralDataManage";
+
+// ---- Health Data Pages ----
+import HealthDataAdd from "./pages/data/HealthDataAdd";
+import HealthDataManage from "./pages/data/HealthDataManage";
+
+// History Pages
+import PatientHistory from "./pages/history/PatientHistory";
+import BillHistory from "./pages/history/BillHistory";
 
 function App() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
     <>
       <Toaster position="top-right" />
 
       <BrowserRouter>
-
-        {/* Main App Layout */}
         <div className="flex">
-
-          {/* -------- Permanent Sidebar -------- */}
-          <Sidebar />
+          {/* -------- Sidebar -------- */}
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+          />
 
           {/* -------- Page Content -------- */}
-          <div className="flex-1 min-h-screen p-6 ml-64 overflow-y-auto bg-gray-100">
-
+          <div
+            className={`
+              flex-1 min-h-screen p-6 overflow-y-auto bg-gray-100
+              transition-all duration-300
+              ${sidebarCollapsed ? "ml-20" : "ml-64"}
+            `}
+          >
             <Routes>
 
               {/* Dashboard */}
@@ -50,13 +65,22 @@ function App() {
               <Route path="/bill/manage" element={<ManageBill />} />
               <Route path="/bill/add" element={<AddBill />} />
 
-              {/* Data Routes */}
-              <Route path="/data/manage" element={<ManageData />} />
-              <Route path="/data/add" element={<AddData />} />
+              {/* ------- Data Routes (Updated) ------- */}
+
+              {/* General Data */}
+              <Route path="/data/general/manage" element={<GeneralDataManage />} />
+              <Route path="/data/general/add" element={<GeneralDataAdd />} />
+
+              {/* Patient Health Data */}
+              <Route path="/data/health/manage" element={<HealthDataManage />} />
+              <Route path="/data/health/add" element={<HealthDataAdd />} />
+
+              {/* History Routes */}
+              <Route path="/history/patients" element={<PatientHistory />} />
+              <Route path="/history/bills" element={<BillHistory />} />
 
             </Routes>
           </div>
-
         </div>
       </BrowserRouter>
     </>
